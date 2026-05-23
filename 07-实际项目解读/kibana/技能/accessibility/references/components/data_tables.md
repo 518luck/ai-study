@@ -1,17 +1,17 @@
-# EUI data tables: `EuiBasicTable` and `EuiInMemoryTable`
+# EUI 数据表格：`EuiBasicTable` 与 `EuiInMemoryTable`
 
-**Applies to:** `EuiBasicTable`, `EuiInMemoryTable`
+**适用于：** `EuiBasicTable`、`EuiInMemoryTable`
 
-Tables need a **caption** exposed to assistive technology so users understand what the grid represents (different from the page `<title>`). EUI exposes this as **`tableCaption`**.
+数据表格需要向辅助技术（如读屏软件）暴露一个 **caption（表格标题）**，以便用户能够理解当前网格所代表的含义（这与页面的 `<title>` 是不同的）。EUI 将此属性公开为 **`tableCaption`**。
 
-## Canonical usage
+## 标准用法 (Canonical usage)
 
-- Pass **exactly one** **`tableCaption`** per table instance.
-- Caption text **describes the dataset or task** — “User accounts in this space”, not “Table”.
-- If visible nearby text already names the table, you may align caption wording with it; otherwise use **`i18n.translate`** for new strings (see *Localization (i18n)* in **`../shared_principles.md`**).
-- If **`tableCaption`** is supplied through **`{...tableProps}`**, fix it at the **source** or merge explicitly at the callsite — never duplicate conflicting captions.
+- 每个表格实例**必须且只能**传入一个 **`tableCaption`**。
+- 表格标题的文本**应明确描述数据集或任务** — 例如“此空间中的用户账号”，而不是宽泛的“表格”或“Table”。
+- 如果表格附近已有可见的文本为该表格命名，您的 caption 措辞可以与其保持一致；否则，请使用 **`i18n.translate`** 来包装新的字符串（参见 **`../shared_principles.md`** 中的 *国际化 (i18n)* 规范）。
+- 如果 **`tableCaption`** 是通过属性展开（**`{...tableProps}`**）提供的，请在**数据源头**对其进行修复，或在调用处显式合并 — 绝不能产生冲突的重复 caption。
 
-## Examples
+## 代码示例 (Examples)
 
 ```tsx
 <EuiBasicTable
@@ -23,12 +23,12 @@ Tables need a **caption** exposed to assistive technology so users understand wh
 />
 ```
 
-## Common mistakes
+## 常见错误 (Common mistakes)
 
 ```tsx
-// WRONG — no caption
+// 错误案例 — 缺失 caption
 <EuiBasicTable items={items} columns={columns} />
 
-// WRONG — generic caption
+// 错误案例 — 使用了无意义的宽泛 caption
 <EuiBasicTable tableCaption="Table" items={items} columns={columns} />
 ```
