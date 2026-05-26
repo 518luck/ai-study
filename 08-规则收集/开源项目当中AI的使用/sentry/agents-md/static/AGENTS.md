@@ -1,82 +1,90 @@
-# Frontend Development Guide
+# 前端开发指南
 
-> For critical commands and testing rules, see the "Command Execution Guide" section in `/AGENTS.md` in the repository root.
+> 有关关键命令和测试规则，请参见仓库根目录 `/AGENTS.md` 中的“Command Execution Guide”部分。
 
-## Frontend Tech Stack
+## 前端技术栈
 
-- **Language**: TypeScript
-- **Framework**: React 19
-- **Build Tool**: Rspack (Webpack alternative)
-- **Package management**: pnpm
-- **State Management**: Reflux, React Query (TanStack Query)
-- **Styling**: Emotion (CSS-in-JS), Less
-- **Testing**: Jest, React Testing Library
+- **语言**: TypeScript
+- **框架**: React 19
+- **构建工具**: Rspack（Webpack 替代方案）
+- **包管理**: pnpm
+- **状态管理**: Reflux、React Query（TanStack Query）
+- **样式**: Emotion（CSS-in-JS）、Less
+- **测试**: Jest、React Testing Library
 
-## Important Files and Directories
+## 重要文件和目录
 
-- `package.json`: Node.js dependencies and scripts
-- `rspack.config.ts`: Frontend build configuration
-- `tsconfig.json`: TypeScript configuration
-- `eslint.config.ts`: ESLint configuration
-- `stylelint.config.js`: CSS/styling linting
-- **Components**: `static/app/components/{component}/`
-- **Views**: `static/app/views/{area}/{page}.tsx`
+- `package.json`: Node.js 依赖和脚本
+- `rspack.config.ts`: 前端构建配置
+- `tsconfig.json`: TypeScript 配置
+- `eslint.config.ts`: ESLint 配置
+- `stylelint.config.js`: CSS/样式 lint 配置
+- **组件**: `static/app/components/{component}/`
+- **视图**: `static/app/views/{area}/{page}.tsx`
 - **Stores**: `static/app/stores/{store}Store.tsx`
 - **Actions**: `static/app/actionCreators/{resource}.tsx`
-- **Utils**: `static/app/utils/{utility}.tsx`
-- **Types**: `static/app/types/{area}.tsx`
-- **API Client**: `static/app/api.tsx`
+- **工具函数**: `static/app/utils/{utility}.tsx`
+- **类型**: `static/app/types/{area}.tsx`
+- **API 客户端**: `static/app/api.tsx`
 
-### Routing
+### 路由
 
-- Routes defined in `static/app/routes.tsx`
-- Use React Router v6 patterns
-- Lazy load route components when possible
+- 路由定义在 `static/app/routes.tsx`
+- 使用 React Router v6 模式
+- 尽可能延迟加载路由组件
 
-### Frontend API Calls
+### 前端 API 调用
 
-Use `apiOptions` with `useQuery` from TanStack Query. **Do not use `useApiQuery`, `getApiQueryData`, or `setApiQueryData`** — they are deprecated.
+将 `apiOptions` 与 TanStack Query 的 `useQuery` 搭配使用。**不要使用 `useApiQuery`、`getApiQueryData` 或 `setApiQueryData`**，它们已经弃用。
 
 ```typescript
-import {skipToken, useQuery} from '@tanstack/react-query';
-import {apiOptions} from 'sentry/utils/api/apiOptions';
+import { skipToken, useQuery } from "@tanstack/react-query";
+import { apiOptions } from "sentry/utils/api/apiOptions";
 
 // Basic usage
 const query = useQuery(
-  apiOptions.as<ResponseType>()('/organizations/$organizationIdOrSlug/endpoint/', {
-    path: {organizationIdOrSlug: organization.slug},
-    staleTime: 30_000,
-  })
+  apiOptions.as<ResponseType>()(
+    "/organizations/$organizationIdOrSlug/endpoint/",
+    {
+      path: { organizationIdOrSlug: organization.slug },
+      staleTime: 30_000,
+    },
+  ),
 );
 
 // Conditional fetching — pass skipToken as path to disable the query
 const query = useQuery(
-  apiOptions.as<ResponseType>()('/organizations/$organizationIdOrSlug/items/$itemId/', {
-    path: itemId ? {organizationIdOrSlug: organization.slug, itemId} : skipToken,
-    staleTime: 30_000,
-  })
+  apiOptions.as<ResponseType>()(
+    "/organizations/$organizationIdOrSlug/items/$itemId/",
+    {
+      path: itemId
+        ? { organizationIdOrSlug: organization.slug, itemId }
+        : skipToken,
+      staleTime: 30_000,
+    },
+  ),
 );
 ```
 
-Key rules:
+关键规则：
 
-- **`staleTime` is required** — you must choose a value (`0`, a number in ms, `Infinity`, or `'static'`).
-- **Build abstractions over `apiOptions`**, not over `useQuery`. Return the options object so consumers can pass it to `useQuery`, `useQueries`, `prefetchQuery`, etc.
-- **Cache stores `{json, headers}`**, not just the body. `apiOptions` uses `select` to extract `.json` by default, but `getQueryData`, `setQueryData`, `retry` functions, and `predicate` callbacks all receive the raw `ApiResponse<T>` shape.
-- **never** use `api.requestPromise` for a Query - it returns the wrong structure. If you must make a manual `queryFn`, use `apiFetch`.
+- **`staleTime` 是必填项**，你必须选择一个值（`0`、以毫秒为单位的数字、`Infinity` 或 `'static'`）。
+- **基于 `apiOptions` 构建抽象**，而不是基于 `useQuery`。返回 options 对象，以便调用方可以将其传给 `useQuery`、`useQueries`、`prefetchQuery` 等。
+- **缓存存储的是 `{json, headers}`**，而不只是响应体。`apiOptions` 默认使用 `select` 提取 `.json`，但 `getQueryData`、`setQueryData`、`retry` 函数和 `predicate` 回调都会接收原始的 `ApiResponse<T>` 形状。
+- **永远不要** 将 `api.requestPromise` 用于 Query，它会返回错误的结构。如果必须手动编写 `queryFn`，请使用 `apiFetch`。
 
-#### Accessing response headers (pagination, hit counts)
+#### 访问响应头（分页、命中数）
 
-By default, `apiOptions` selects only the JSON body from the response. If you need response headers (e.g., `Link` for pagination or `X-Hits` / `X-Max-Hits` for total counts), override `select` with `selectJsonWithHeaders`:
+默认情况下，`apiOptions` 只会从响应中选择 JSON body。如果需要响应头（例如用于分页的 `Link`，或用于总数的 `X-Hits` / `X-Max-Hits`），请用 `selectJsonWithHeaders` 覆盖 `select`：
 
 ```typescript
-import {useQuery} from '@tanstack/react-query';
-import {apiOptions, selectJsonWithHeaders} from 'sentry/utils/api/apiOptions';
+import { useQuery } from "@tanstack/react-query";
+import { apiOptions, selectJsonWithHeaders } from "sentry/utils/api/apiOptions";
 
-const {data} = useQuery({
-  ...apiOptions.as<Item[]>()('/organizations/$organizationIdOrSlug/items/', {
-    path: {organizationIdOrSlug: organization.slug},
-    query: {cursor, per_page: 25},
+const { data } = useQuery({
+  ...apiOptions.as<Item[]>()("/organizations/$organizationIdOrSlug/items/", {
+    path: { organizationIdOrSlug: organization.slug },
+    query: { cursor, per_page: 25 },
     staleTime: 0,
   }),
   select: selectJsonWithHeaders,
@@ -85,48 +93,48 @@ const {data} = useQuery({
 // data is ApiResponse<Item[]> — an object with `json` and `headers`
 const items = data?.json ?? [];
 const pageLinks = data?.headers.Link; // string | undefined
-const totalHits = data?.headers['X-Hits']; // number | undefined
-const maxHits = data?.headers['X-Max-Hits']; // number | undefined
+const totalHits = data?.headers["X-Hits"]; // number | undefined
+const maxHits = data?.headers["X-Max-Hits"]; // number | undefined
 ```
 
-Note that `X-Hits` and `X-Max-Hits` are already parsed to `number | undefined` — no `parseInt` needed.
+注意，`X-Hits` 和 `X-Max-Hits` 已经解析为 `number | undefined`，不需要 `parseInt`。
 
-## General Frontend Rules
+## 通用前端规则
 
-1. NO new Reflux stores
-2. NO class components
-3. NO CSS files (use [core components](./app/components/core/) or Emotion in edge cases)
-4. ALWAYS use TypeScript
-5. ALWAYS colocate tests
-6. Lazy load routes: `React.lazy(() => import('...'))`
+1. 不要新增 Reflux stores
+2. 不要使用 class components
+3. 不要使用 CSS 文件（使用 [core components](./app/components/core/)，或在边缘情况下使用 Emotion）
+4. 始终使用 TypeScript
+5. 始终将测试与代码放在一起
+6. 延迟加载路由：`React.lazy(() => import('...'))`
 
-## UI Patterns
+## UI 模式
 
-- When implementing advanced copy to clipboard functionality like markdown or JSON, avoid using separate buttons to copy different formats and prefer using sentry/components/copyAsDropdown and provide the different format options.
+- 实现 Markdown 或 JSON 等高级复制到剪贴板功能时，避免使用单独按钮复制不同格式，优先使用 `sentry/components/copyAsDropdown` 并提供不同的格式选项。
 
-### General practices
+### 通用实践
 
-- Use [core components](./app/components/core/) whenever possible. Use Emotion (styled components) only in edge cases.
-- Use Text, Heading, Flex, Grid, Stack, Container and other core typography/layout components whenever possible.
-- Add stories whenever possible (\*.stories.mdx).
-- Icons should be part of our icon set at static/app/icons and should never be inlined anywhere in the app.
-- Images should be placed inside static/app/images and imported via loader
+- 尽可能使用 [core components](./app/components/core/)。只有在边缘情况下才使用 Emotion（styled components）。
+- 尽可能使用 Text、Heading、Flex、Grid、Stack、Container 以及其他核心排版/布局组件。
+- 尽可能添加 stories（\*.stories.mdx）。
+- 图标应该属于 `static/app/icons` 中的图标集，绝不能在应用中的任何位置内联。
+- 图片应该放在 `static/app/images` 中，并通过 loader 导入。
 
 ### Core components
 
-Always use Core components whenever available. Avoid using Emotion (styled components) unless absolutely necessary.
+只要可用，就始终使用 Core components。除非绝对必要，否则避免使用 Emotion（styled components）。
 
-#### Layout
+#### 布局
 
 ##### Grid
 
-Use <Grid> from `@sentry/scraps/layout` for elements that require grid layout as opposed to styled components with `display: grid`
+对于需要 grid 布局的元素，使用 `@sentry/scraps/layout` 中的 <Grid>，而不是使用带有 `display: grid` 的 styled components。
 
 ```tsx
-import {Grid} from '@sentry/scraps/layout';
+import { Grid } from "@sentry/scraps/layout";
 
 // ❌ Do not use styled and create a new styled component
-const Component = styled('div')`
+const Component = styled("div")`
   display: flex;
   flex-directon: column;
 `;
@@ -137,13 +145,13 @@ const Component = styled('div')`
 
 ##### Flex
 
-Use <Flex> from `@sentry/scraps/layout` for elements that require flex layout as opposed to styled components with `display: flex`.
+对于需要 flex 布局的元素，使用 `@sentry/scraps/layout` 中的 <Flex>，而不是使用带有 `display: flex` 的 styled components。
 
 ```tsx
-import {Flex} from '@sentry/scraps/layout';
+import { Flex } from "@sentry/scraps/layout";
 
 // ❌ Do not use styled and create a new styled component
-const Component = styled('div')`
+const Component = styled("div")`
   display: flex;
   flex-directon: column;
 `;
@@ -154,24 +162,24 @@ const Component = styled('div')`
 
 ##### Container
 
-Use using <Container> from `@sentry/scraps/layout` over simple elements that require a border or border radius.
+对于需要边框或圆角的简单元素，优先使用 `@sentry/scraps/layout` 中的 <Container>。
 
 ```tsx
-import {Container} from '@sentry/scraps/layout';
+import { Container } from "@sentry/scraps/layout";
 
 // ❌ Do not use styled and create a new styled component
-const Component = styled('div')`
+const Component = styled("div")`
   padding: space(2);
-  border: 1px solid ${p => p.theme.tokens.border.primary};
+  border: 1px solid ${(p) => p.theme.tokens.border.primary};
 `;
 
 // ✅ Use the Container primitive
 <Container padding="md" border="primary"></Container>;
 ```
 
-##### General Guidelines
+##### 通用指南
 
-Favor props over style attribute
+优先使用 props，而不是 `style` 属性。
 
 ```tsx
 // ❌ Do not use style attribute for supported props
@@ -181,35 +189,35 @@ Favor props over style attribute
 <Flex width="100%" padding="md lg">
 ```
 
-Use responsive props instead of styled media queries for Flex, Grid and Container.
+对于 Flex、Grid 和 Container，使用响应式 props，而不是 styled media queries。
 
 ```tsx
-import {Flex} from '@sentry/scraps/layout';
+import { Flex } from "@sentry/scraps/layout";
 
 // ❌ Do not use styled and create a new styled component
-const Component = styled('div')`
+const Component = styled("div")`
   display: flex;
   flex-directon: column;
 
-  @media screen and (min-width: ${p => p.theme.breakpoints.md}) {
+  @media screen and (min-width: ${(p) => p.theme.breakpoints.md}) {
     flex-direction: row;
   }
 `;
 
 // ✅ Use the responsive prop signature
-<Flex direction={{xs: 'column', md: 'row'}}></Flex>;
+<Flex direction={{ xs: "column", md: "row" }}></Flex>;
 ```
 
-Prefer the use of gap or padding over margin.
+优先使用 gap 或 padding，而不是 margin。
 
 ```tsx
-import {Flex} from '@sentry/scraps/layout';
+import { Flex } from "@sentry/scraps/layout";
 
 // ❌ Do not use styled and create a new styled component
-const Component = styled('div')`
+const Component = styled("div")`
   display: flex;
   flex-directon: column;
-  gap: ${p => p.theme.spacing.lg};
+  gap: ${(p) => p.theme.spacing.lg};
 `;
 
 // ✅ Use the responsive prop signature
@@ -219,18 +227,18 @@ const Component = styled('div')`
 </Flex>;
 ```
 
-#### Typography
+#### 排版
 
 ##### Heading
 
-Use <Heading> from `@sentry/scraps/text` for headings instead of styled components that style heading typography.
+标题应使用 `@sentry/scraps/text` 中的 <Heading>，而不是使用 styled components 设置标题排版样式。
 
 ```tsx
-import {Heading} from '@sentry/scraps/text';
+import { Heading } from "@sentry/scraps/text";
 
 // ❌ Do not use styled and create a new styled component
-const Title = styled('h2')`
-  font-size: ${p => p.theme.fontSize.md};
+const Title = styled("h2")`
+  font-size: ${(p) => p.theme.fontSize.md};
   font-weight: bold;
 `;
 
@@ -238,7 +246,7 @@ const Title = styled('h2')`
 <Heading as="h2">Heading</Heading>;
 ```
 
-Do not use or style h1, h2, h3, h4, h5, h6 intrinsic elements. Prefer using <Heading as="h1...h6">title</Heading> component instead
+不要使用或设置 h1、h2、h3、h4、h5、h6 原生元素的样式。优先使用 <Heading as="h1...h6">title</Heading> 组件。
 
 ```tsx
 import {Heading} from '@sentry/scraps/text';
@@ -265,15 +273,15 @@ function Component(){
 
 ##### Text
 
-Use <Text> from `@sentry/scraps/text` for text styling instead of styled components that handle typography features like color, overflow, font-size, font-weight.
+文本样式应使用 `@sentry/scraps/text` 中的 <Text>，而不是使用 styled components 处理 color、overflow、font-size、font-weight 等排版特性。
 
 ```tsx
-import {Text} from '@sentry/scraps/text';
+import { Text } from "@sentry/scraps/text";
 
 // ❌ Do not use styled and create a new styled component
-const Label = styled('span')`
-  color: ${p => p.theme.tokens.content.secondary};
-  font-size: ${p => p.theme.fontSizes.small};
+const Label = styled("span")`
+  color: ${(p) => p.theme.tokens.content.secondary};
+  font-size: ${(p) => p.theme.fontSizes.small};
 `;
 
 // ✅ Use the Text typography primitive
@@ -282,18 +290,18 @@ const Label = styled('span')`
 </Text>;
 ```
 
-Do not use or style intrinsic elements like. Prefer using <Text as="p | span | div">text...</Text> component instead
+不要使用或设置原生元素的样式。优先使用 <Text as="p | span | div">text...</Text> 组件。
 
 ```tsx
-import {Text} from '@sentry/scraps/text';
+import { Text } from "@sentry/scraps/text";
 
 // ❌ Do not style intrinsic elements directly
-const Paragraph = styled('p')`
-  color: ${p => p.theme.tokens.content.secondary};
+const Paragraph = styled("p")`
+  color: ${(p) => p.theme.tokens.content.secondary};
   line-height: 1.5;
 `;
 
-const Label = styled('span')`
+const Label = styled("span")`
   font-weight: bold;
   text-transform: uppercase;
 `;
@@ -325,9 +333,9 @@ function Content() {
 }
 ```
 
-##### Splitting layout and typography
+##### 分离布局和排版
 
-- Split Layout from Typography by directly using Flex, Grid, Stack or Container and Text or Heading components
+- 将布局和排版分离：直接使用 Flex、Grid、Stack 或 Container，以及 Text 或 Heading 组件。
 
 ```tsx
 // ❌ Do not couple typography with layout
@@ -344,11 +352,11 @@ const Component = styled('div')`
 <Flex>
 ```
 
-#### Assets
+#### 资源
 
 ##### Image
 
-Use the core component <Image/> from `@sentry/scraps/image` instead of intrinsic <img />.
+使用 `@sentry/scraps/image` 中的核心组件 <Image/>，而不是原生 <img />。
 
 ```tsx
 // ❌ Do not use raw intrinsic elements or static paths
@@ -371,7 +379,7 @@ function Component() {
 
 ##### Avatars
 
-Use the core avatar components (<UserAvatar/>, <TeamAvatar/>, <ProjectAvatar/>, <OrganizationAvatar/>, <SentryAppAvatar/>, <DocIntegrationAvatar/>) from `static/app/components/core/avatar` for avatars.
+头像应使用 `static/app/components/core/avatar` 中的核心头像组件（<UserAvatar/>、<TeamAvatar/>、<ProjectAvatar/>、<OrganizationAvatar/>、<SentryAppAvatar/>、<DocIntegrationAvatar/>）。
 
 ```tsx
 // ✅ Use Avatar component and useUser
@@ -398,17 +406,19 @@ function Component() {
 }
 ```
 
-For lists of avatars, use <AvatarList>.
+对于头像列表，使用 <AvatarList>。
 
 ##### Disclosure
 
-Use the core disclosure component instead of building
+使用核心 disclosure 组件，而不是自行构建。
 
 ```tsx
 // ✅ Use Disclosure component
 <Disclosure>
   <Disclosure.Title>Title</Disclosure.Title>
-  <Disclosure.Content>Content that is toggled based on expanded state</Disclosure.Content>
+  <Disclosure.Content>
+    Content that is toggled based on expanded state
+  </Disclosure.Content>
 </Disclosure>;
 
 // ❌ Do not reimplement disclosure pattern manually
@@ -419,7 +429,7 @@ function Component() {
     <div>
       <Button
         onClick={() => setIsExpanded(!isExpanded)}
-        icon={<IconChevron direction={isExpanded ? 'down' : 'right'} />}
+        icon={<IconChevron direction={isExpanded ? "down" : "right"} />}
       >
         Title
       </Button>
@@ -431,9 +441,9 @@ function Component() {
 }
 ```
 
-### Images and Icons
+### 图片和图标
 
-Place all icons in the static/app/icons folder. Never inline SVGs or add them to any other folder. Optimize SVGs using svgo or svgomg
+将所有图标放在 `static/app/icons` 文件夹中。绝不要内联 SVG，也不要将它们添加到任何其他文件夹。使用 svgo 或 svgomg 优化 SVG。
 
 ```tsx
 // ❌ Never inline SVGs
@@ -461,9 +471,9 @@ import {IconExclamation} from "sentry/icons"
 // ❌ All images belong inside static/app/images
 
 // ✅ Images are imported from sentry-images alias
-import image from 'sentry-images/example.png';
+import image from "sentry-images/example.png";
 
-import image from './image.png';
+import image from "./image.png";
 
 function Component() {
   return <Image src={image} />;
@@ -479,17 +489,17 @@ function Component() {
 }
 ```
 
-## React Testing Guidelines
+## React 测试指南
 
-### Testing Philosophy
+### 测试理念
 
-- **User-centric testing**: Write tests that resemble how users interact with the app.
-- **Avoid implementation details**: Focus on behavior, not internal component structure.
-- **Do not share state between tests**: Behavior should not be influenced by other tests in the test suite.
+- **以用户为中心的测试**: 编写接近用户与应用交互方式的测试。
+- **避免实现细节**: 关注行为，而不是组件内部结构。
+- **不要在测试之间共享状态**: 行为不应受到同一测试套件中其他测试的影响。
 
-### Imports
+### 导入
 
-**Always** import from `sentry-test/reactTestingLibrary`, not directly from `@testing-library/react`:
+**始终** 从 `sentry-test/reactTestingLibrary` 导入，而不是直接从 `@testing-library/react` 导入：
 
 ```tsx
 import {
@@ -498,41 +508,41 @@ import {
   userEvent,
   waitFor,
   within,
-} from 'sentry-test/reactTestingLibrary';
+} from "sentry-test/reactTestingLibrary";
 ```
 
-### Query Priority (in order of preference)
+### 查询优先级（按优先顺序）
 
-1. **`getByRole`** - Primary selector for most elements
-
-   ```tsx
-   screen.getByRole('button', {name: 'Save'});
-   screen.getByRole('textbox', {name: 'Search'});
-   ```
-
-2. **`getByLabelText`/`getByPlaceholderText`** - For form elements
+1. **`getByRole`** - 大多数元素的首选选择器
 
    ```tsx
-   screen.getByLabelText('Email Address');
-   screen.getByPlaceholderText('Enter Search Term');
+   screen.getByRole("button", { name: "Save" });
+   screen.getByRole("textbox", { name: "Search" });
    ```
 
-3. **`getByText`** - For non-interactive elements
+2. **`getByLabelText`/`getByPlaceholderText`** - 用于表单元素
 
    ```tsx
-   screen.getByText('Error Message');
+   screen.getByLabelText("Email Address");
+   screen.getByPlaceholderText("Enter Search Term");
    ```
 
-4. **`getByTestId`** - Last resort only
+3. **`getByText`** - 用于非交互元素
+
    ```tsx
-   screen.getByTestId('custom-component');
+   screen.getByText("Error Message");
    ```
 
-### Best Practices
+4. **`getByTestId`** - 仅作为最后手段
+   ```tsx
+   screen.getByTestId("custom-component");
+   ```
 
-#### Avoid mocking hooks, functions, or components
+### 最佳实践
 
-Do not use `jest.mocked()`.
+#### 避免 mock hooks、函数或组件
+
+不要使用 `jest.mocked()`。
 
 ```tsx
 // ❌ Don't mock hooks
@@ -579,9 +589,9 @@ renderHook(useNavigate, {
 renderHookWithProviders(useNavigate)
 ```
 
-#### Use fixtures
+#### 使用 fixtures
 
-Sentry fixtures are located in tests/js/fixtures/ while GetSentry fixtures are located in tests/js/getsentry-test/fixtures/.
+Sentry fixtures 位于 `tests/js/fixtures/`，GetSentry fixtures 位于 `tests/js/getsentry-test/fixtures/`。
 
 ```tsx
 
@@ -596,194 +606,196 @@ const project = ProjectFixture(partialProject)
 
 ```
 
-#### Use `screen` instead of destructuring
+#### 使用 `screen` 而不是解构
 
 ```tsx
 // ❌ Don't do this
-const {getByRole} = render(<Component />);
+const { getByRole } = render(<Component />);
 
 // ✅ Do this
 render(<Component />);
-const button = screen.getByRole('button');
+const button = screen.getByRole("button");
 ```
 
-#### Query selection guidelines
+#### 查询选择指南
 
-- Use `getBy...` for elements that should exist
-- Use `queryBy...` ONLY when checking for non-existence
-- Use `await findBy...` when waiting for elements to appear
+- 对应该存在的元素使用 `getBy...`
+- 仅在检查不存在时使用 `queryBy...`
+- 等待元素出现时使用 `await findBy...`
 
 ```tsx
 // ❌ Wrong
-expect(screen.queryByRole('alert')).toBeInTheDocument();
+expect(screen.queryByRole("alert")).toBeInTheDocument();
 
 // ✅ Correct
-expect(screen.getByRole('alert')).toBeInTheDocument();
-expect(screen.queryByRole('button')).not.toBeInTheDocument();
+expect(screen.getByRole("alert")).toBeInTheDocument();
+expect(screen.queryByRole("button")).not.toBeInTheDocument();
 ```
 
-#### Async testing
+#### 异步测试
 
 ```tsx
 // ❌ Don't use waitFor for appearance
 await waitFor(() => {
-  expect(screen.getByRole('alert')).toBeInTheDocument();
+  expect(screen.getByRole("alert")).toBeInTheDocument();
 });
 
 // ✅ Use findBy for appearance
-expect(await screen.findByRole('alert')).toBeInTheDocument();
+expect(await screen.findByRole("alert")).toBeInTheDocument();
 
 // ✅ Use waitForElementToBeRemoved for disappearance
-await waitForElementToBeRemoved(() => screen.getByRole('alert'));
+await waitForElementToBeRemoved(() => screen.getByRole("alert"));
 ```
 
-#### Avoid waiting for loading indicators
+#### 避免等待加载指示器
 
-Do not use `findBy` with `.not.toBeInTheDocument()` for loading indicators. `findBy` will error if the element is not found, but we're asserting it should NOT exist. Loading indicators are also flakey since they appear on screen for only a few ticks.
+不要对加载指示器使用带有 `.not.toBeInTheDocument()` 的 `findBy`。如果找不到元素，`findBy` 会报错，但我们断言的是它不应该存在。加载指示器也不稳定，因为它们只会在屏幕上出现很短的几个 tick。
 
 ```tsx
 // ❌ Wrong - findBy errors if element not found, and loading indicators are flakey
-expect(await screen.findByTestId('loading-indicator')).not.toBeInTheDocument();
+expect(await screen.findByTestId("loading-indicator")).not.toBeInTheDocument();
 
 // ✅ Correct - wait for the actual content you care about
 await waitFor(() => {
-  expect(screen.getByRole('button', {name: 'Submit'})).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Submit" })).toBeInTheDocument();
 });
 
 // ✅ Also correct - use findBy on the content that appears after loading
-expect(await screen.findByRole('button', {name: 'Submit'})).toBeInTheDocument();
+expect(
+  await screen.findByRole("button", { name: "Submit" }),
+).toBeInTheDocument();
 ```
 
-#### User interactions
+#### 用户交互
 
 ```tsx
 // ❌ Don't use fireEvent
-fireEvent.change(input, {target: {value: 'text'}});
+fireEvent.change(input, { target: { value: "text" } });
 
 // ✅ Use userEvent
 await userEvent.click(input);
-await userEvent.keyboard('text');
+await userEvent.keyboard("text");
 ```
 
-#### Testing routing
+#### 测试路由
 
 ```tsx
-const {router} = render(<TestComponent />, {
+const { router } = render(<TestComponent />, {
   initialRouterConfig: {
     location: {
-      pathname: '/foo/',
-      query: {page: '1'},
+      pathname: "/foo/",
+      query: { page: "1" },
     },
   },
 });
 // Uses passes in config to set initial location
-expect(router.location.pathname).toBe('/foo');
-expect(router.location.query.page).toBe('1');
+expect(router.location.pathname).toBe("/foo");
+expect(router.location.query.page).toBe("1");
 // Clicking links goes to the correct location
-await userEvent.click(screen.getByRole('link', {name: 'Go to /bar/'}));
+await userEvent.click(screen.getByRole("link", { name: "Go to /bar/" }));
 // Can check current route on the returned router
-expect(router.location.pathname).toBe('/bar/');
+expect(router.location.pathname).toBe("/bar/");
 // Can test manual route changes with router.navigate
-router.navigate('/new/path/');
+router.navigate("/new/path/");
 router.navigate(-1); // Simulates clicking the back button
 ```
 
-If the component uses `useParams()`, the `route` property can be used:
+如果组件使用 `useParams()`，可以使用 `route` 属性：
 
 ```tsx
 function TestComponent() {
-  const {id} = useParams();
+  const { id } = useParams();
   return <div>{id}</div>;
 }
-const {router} = render(<TestComponent />, {
+const { router } = render(<TestComponent />, {
   initialRouterConfig: {
     location: {
-      pathname: '/foo/123/',
+      pathname: "/foo/123/",
     },
-    route: '/foo/:id/',
+    route: "/foo/:id/",
   },
 });
-expect(screen.getByText('123')).toBeInTheDocument();
+expect(screen.getByText("123")).toBeInTheDocument();
 ```
 
-#### Testing components that make network requests
+#### 测试发起网络请求的组件
 
 ```tsx
 // Simple GET request
 MockApiClient.addMockResponse({
-  url: '/projects/',
-  body: [{id: 1, name: 'my project'}],
+  url: "/projects/",
+  body: [{ id: 1, name: "my project" }],
 });
 
 // POST request
 MockApiClient.addMockResponse({
-  url: '/projects/',
-  method: 'POST',
-  body: {id: 1, name: 'my project'},
+  url: "/projects/",
+  method: "POST",
+  body: { id: 1, name: "my project" },
 });
 
 // Complex matching with query params and request body
 MockApiClient.addMockResponse({
-  url: '/projects/',
-  method: 'POST',
-  body: {id: 2, name: 'other'},
+  url: "/projects/",
+  method: "POST",
+  body: { id: 2, name: "other" },
   match: [
-    MockApiClient.matchQuery({param: '1'}),
-    MockApiClient.matchData({name: 'other'}),
+    MockApiClient.matchQuery({ param: "1" }),
+    MockApiClient.matchData({ name: "other" }),
   ],
 });
 
 // Error responses
 MockApiClient.addMockResponse({
-  url: '/projects/',
+  url: "/projects/",
   body: {
-    detail: 'Internal Error',
+    detail: "Internal Error",
   },
   statusCode: 500,
 });
 ```
 
-##### Always Await Async Assertions
+##### 始终 Await 异步断言
 
-Network requests are asynchronous. Always use `findBy` queries or properly await assertions:
+网络请求是异步的。始终使用 `findBy` 查询，或正确 await 断言：
 
 ```tsx
 // ❌ Wrong - will fail intermittently
-expect(screen.getByText('Loaded Data')).toBeInTheDocument();
+expect(screen.getByText("Loaded Data")).toBeInTheDocument();
 
 // ✅ Correct - waits for element to appear
-expect(await screen.findByText('Loaded Data')).toBeInTheDocument();
+expect(await screen.findByText("Loaded Data")).toBeInTheDocument();
 ```
 
-##### Handle Refetches in Mutations
+##### 处理 Mutations 中的 Refetches
 
-When testing mutations that trigger data refetches, update mocks before the refetch occurs:
+测试会触发数据重新获取的 mutations 时，请在 refetch 发生前更新 mocks：
 
 ```tsx
-it('adds item and updates list', async () => {
+it("adds item and updates list", async () => {
   // Initial empty state
   MockApiClient.addMockResponse({
-    url: '/items/',
+    url: "/items/",
     body: [],
   });
 
   const createRequest = MockApiClient.addMockResponse({
-    url: '/items/',
-    method: 'POST',
-    body: {id: 1, name: 'New Item'},
+    url: "/items/",
+    method: "POST",
+    body: { id: 1, name: "New Item" },
   });
 
   render(<ItemList />);
 
-  await userEvent.click(screen.getByRole('button', {name: 'Add Item'}));
+  await userEvent.click(screen.getByRole("button", { name: "Add Item" }));
 
   // CRITICAL: Override mock before refetch happens
   MockApiClient.addMockResponse({
-    url: '/items/',
-    body: [{id: 1, name: 'New Item'}],
+    url: "/items/",
+    body: [{ id: 1, name: "New Item" }],
   });
 
   await waitFor(() => expect(createRequest).toHaveBeenCalled());
-  expect(await screen.findByText('New Item')).toBeInTheDocument();
+  expect(await screen.findByText("New Item")).toBeInTheDocument();
 });
 ```
