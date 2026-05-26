@@ -1,58 +1,58 @@
 ---
 name: design-system
-description: Guide for using Sentry's layout and text primitives. Use when implementing UI components, layouts, or typography. Enforces use of core components over styled components.
+description: Sentry 布局和文本原语使用指南。用于实现 UI 组件、布局或排版时。强制使用核心组件，而不是 styled components。
 ---
 
-# Layout and Text Primitives at Sentry
+# Sentry 中的布局和文本原语
 
-## Core Principle
+## 核心原则
 
-**ALWAYS use core components from `@sentry/scraps` instead of creating styled components with Emotion.**
+**始终使用 `@sentry/scraps` 中的核心组件，而不是用 Emotion 创建 styled components。**
 
-Core components provide consistent styling, responsive design, and better maintainability across the codebase.
+核心组件可在整个代码库中提供一致的样式、响应式设计以及更好的可维护性。
 
-## Component Implementation Reference
+## 组件实现参考
 
-For the complete list of supported props and their types, refer to the implementation files:
+如需查看完整的受支持 props 列表及其类型，请参考实现文件：
 
-- **Layout Components**: `/static/app/components/core/layout/`
-  - `container.tsx` - Base container with all layout props
-  - `flex.tsx` - Flex layout primitive
-  - `grid.tsx` - Grid layout primitive
-  - `stack.tsx` - Stack layout primitive (Flex with column direction by default)
-- **Typography Components**: `/static/app/components/core/text/`
-  - `text.tsx` - Text primitive
-  - `heading.tsx` - Heading primitive
+- **布局组件**：`/static/app/components/core/layout/`
+  - `container.tsx` - 带有所有布局 props 的基础容器
+  - `flex.tsx` - Flex 布局原语
+  - `grid.tsx` - Grid 布局原语
+  - `stack.tsx` - Stack 布局原语（默认列方向的 Flex）
+- **排版组件**：`/static/app/components/core/text/`
+  - `text.tsx` - 文本原语
+  - `heading.tsx` - 标题原语
 
-## Layout Primitives
+## 布局原语
 
-> **Important**: `Flex`, `Grid`, and `Stack` all extend `Container`. This means **every prop available on Container is also available on Flex, Grid, and Stack**. When you use `<Flex>`, you get all Container props (position, padding, border, overflow, etc.) PLUS the flex-specific props. The same applies to Grid and Stack.
+> **重要**：`Flex`、`Grid` 和 `Stack` 都扩展自 `Container`。这意味着 **Container 上可用的每个 prop 也都可用于 Flex、Grid 和 Stack**。使用 `<Flex>` 时，你会获得所有 Container props（position、padding、border、overflow 等），再加上 Flex 专属 props。同样的规则也适用于 Grid 和 Stack。
 
 ### Container
 
-Base layout component that supports all common layout properties. Flex, Grid, and Stack extend Container, inheriting all of its props.
+支持所有常见布局属性的基础布局组件。Flex、Grid 和 Stack 扩展自 Container，并继承它的所有 props。
 
-**Key Props** (see `container.tsx` for complete list):
+**关键 Props**（完整列表见 `container.tsx`）：
 
 - `position`: "static" | "relative" | "absolute" | "fixed" | "sticky"
-- `padding`, `paddingTop`, `paddingBottom`, `paddingLeft`, `paddingRight`: SpaceSize tokens
-- `margin`, `marginTop`, etc.: SpaceSize tokens (deprecated, prefer gap)
+- `padding`, `paddingTop`, `paddingBottom`, `paddingLeft`, `paddingRight`: SpaceSize token
+- `margin`, `marginTop` 等：SpaceSize token（已废弃，优先使用 gap）
 - `width`, `height`, `minWidth`, `maxWidth`, `minHeight`, `maxHeight`
-- `border`, `borderTop`, `borderBottom`, `borderLeft`, `borderRight`: BorderVariant tokens
-- `radius`: RadiusSize tokens
+- `border`, `borderTop`, `borderBottom`, `borderLeft`, `borderRight`: BorderVariant token
+- `radius`: RadiusSize token
 - `overflow`, `overflowX`, `overflowY`: "visible" | "hidden" | "scroll" | "auto"
-- `background`: SurfaceVariant ("primary" | "secondary" | "tertiary")
-- `display`: Various display types
-- Flex item props: `flex`, `flexGrow`, `flexShrink`, `flexBasis`, `alignSelf`, `order`
-- Grid item props: `area`, `row`, `column`
+- `background`: SurfaceVariant（"primary" | "secondary" | "tertiary"）
+- `display`: 各种 display 类型
+- Flex 项 props：`flex`, `flexGrow`, `flexShrink`, `flexBasis`, `alignSelf`, `order`
+- Grid 项 props：`area`, `row`, `column`
 
 ```tsx
-import {Container} from '@sentry/scraps/layout';
+import { Container } from "@sentry/scraps/layout";
 
 // ❌ Don't create styled components
-const Component = styled('div')`
-  padding: ${p => p.theme.space.md};
-  border: 1px solid ${p => p.theme.tokens.border.primary};
+const Component = styled("div")`
+  padding: ${(p) => p.theme.space.md};
+  border: 1px solid ${(p) => p.theme.tokens.border.primary};
 `;
 
 // ✅ Use Container primitive
@@ -63,24 +63,24 @@ const Component = styled('div')`
 
 ### Flex
 
-Use `<Flex>` for flex layouts. Extends `Container`, inheriting all Container props plus flex-specific props.
+使用 `<Flex>` 创建 flex 布局。它扩展自 `Container`，继承所有 Container props，并额外提供 Flex 专属 props。
 
-**Flex-Specific Props** (see `flex.tsx` for complete list):
+**Flex 专属 Props**（完整列表见 `flex.tsx`）：
 
 - `direction`: "row" | "row-reverse" | "column" | "column-reverse"
 - `align`: "start" | "end" | "center" | "baseline" | "stretch"
 - `justify`: "start" | "end" | "center" | "between" | "around" | "evenly" | "left" | "right"
-- `gap`: SpaceSize or `"${SpaceSize} ${SpaceSize}"` for row/column gap
+- `gap`: SpaceSize，或用于行/列间距的 `"${SpaceSize} ${SpaceSize}"`
 - `wrap`: "nowrap" | "wrap" | "wrap-reverse"
 - `display`: "flex" | "inline-flex" | "none"
 
-**Plus ALL Container props**: `position`, `padding`, `margin`, `width`, `height`, `border`, `radius`, `overflow`, `background`, flex/grid item props, and more (see Container section above).
+**以及所有 Container props**：`position`、`padding`、`margin`、`width`、`height`、`border`、`radius`、`overflow`、`background`、flex/grid 项 props 等更多内容（见上方 Container 部分）。
 
 ```tsx
-import {Flex} from '@sentry/scraps/layout';
+import { Flex } from "@sentry/scraps/layout";
 
 // ❌ Don't create styled components
-const Component = styled('div')`
+const Component = styled("div")`
   display: flex;
   flex-direction: column;
   position: relative;
@@ -95,31 +95,31 @@ const Component = styled('div')`
 
 ### Grid
 
-Use `<Grid>` for grid layouts. Extends `Container`, inheriting all Container props plus grid-specific props.
+使用 `<Grid>` 创建 grid 布局。它扩展自 `Container`，继承所有 Container props，并额外提供 Grid 专属 props。
 
-**Grid-Specific Props** (see `grid.tsx` for complete list):
+**Grid 专属 Props**（完整列表见 `grid.tsx`）：
 
-- `columns`: Grid template columns (number or CSS value)
-- `rows`: Grid template rows
-- `areas`: Named grid areas
-- `gap`: SpaceSize or `"${SpaceSize} ${SpaceSize}"` for row/column gap
+- `columns`: Grid 模板列（数字或 CSS 值）
+- `rows`: Grid 模板行
+- `areas`: 命名的 grid 区域
+- `gap`: SpaceSize，或用于行/列间距的 `"${SpaceSize} ${SpaceSize}"`
 - `align`: "start" | "end" | "center" | "baseline" | "stretch" (align-items)
 - `alignContent`: "start" | "end" | "center" | "between" | "around" | "evenly" | "stretch"
 - `justify`: "start" | "end" | "center" | "between" | "around" | "evenly" | "stretch" (justify-content)
 - `justifyItems`: "start" | "end" | "center" | "stretch"
 - `flow`: "row" | "column" | "row dense" | "column dense"
-- `autoColumns`, `autoRows`: Size of auto-generated tracks
+- `autoColumns`, `autoRows`: 自动生成轨道的尺寸
 
-**Plus ALL Container props**: `position`, `padding`, `margin`, `width`, `height`, `border`, `radius`, `overflow`, `background`, flex/grid item props, and more (see Container section above).
+**以及所有 Container props**：`position`、`padding`、`margin`、`width`、`height`、`border`、`radius`、`overflow`、`background`、flex/grid 项 props 等更多内容（见上方 Container 部分）。
 
 ```tsx
-import {Grid} from '@sentry/scraps/layout';
+import { Grid } from "@sentry/scraps/layout";
 
 // ❌ Don't create styled components
-const Component = styled('div')`
+const Component = styled("div")`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: ${p => p.theme.space.md};
+  gap: ${(p) => p.theme.space.md};
 `;
 
 // ✅ Use Grid primitive
@@ -132,22 +132,22 @@ const Component = styled('div')`
 
 ### Stack
 
-Use `<Stack>` for vertical layouts. Stack is essentially `Flex` with `direction="column"` by default. It also provides `Stack.Separator` for adding separators between items.
+使用 `<Stack>` 创建垂直布局。Stack 本质上是默认带有 `direction="column"` 的 `Flex`。它还提供 `Stack.Separator`，用于在项目之间添加分隔线。
 
-**Props** (see `stack.tsx` for complete list):
+**Props**（完整列表见 `stack.tsx`）：
 
-- Same as Flex props (inherits all Flex and Container props)
-- `direction` defaults to "column" (but can be overridden)
-- `Stack.Separator` component for adding dividers between stack items
+- 与 Flex props 相同（继承所有 Flex 和 Container props）
+- `direction` 默认为 "column"（但可以覆盖）
+- `Stack.Separator` 组件用于在 stack 项之间添加分隔线
 
 ```tsx
-import {Stack} from '@sentry/scraps/layout';
+import { Stack } from "@sentry/scraps/layout";
 
 // ❌ Don't create styled components for vertical layouts
-const Component = styled('div')`
+const Component = styled("div")`
   display: flex;
   flex-direction: column;
-  gap: ${p => p.theme.space.md};
+  gap: ${(p) => p.theme.space.md};
 `;
 
 // ✅ Use Stack primitive (automatically column direction)
@@ -173,28 +173,28 @@ const Component = styled('div')`
 </Stack>;
 ```
 
-## Typography Primitives
+## 排版原语
 
 ### Text
 
-Use `<Text>` for all text content. Never use raw `<p>`, `<span>`, or `<div>` elements with text styling.
+所有文本内容都使用 `<Text>`。不要使用带文本样式的原始 `<p>`、`<span>` 或 `<div>` 元素。
 
-**Key Props** (see `text.tsx` for complete list):
+**关键 Props**（完整列表见 `text.tsx`）：
 
-- `as`: "span" | "p" | "label" | "div" (semantic HTML element)
+- `as`: "span" | "p" | "label" | "div"（语义化 HTML 元素）
 - `size`: TextSize ("xs" | "sm" | "md" | "lg" | "xl" | "2xl")
-- `variant`: ContentVariant | "muted" (see Content Variant Tokens below)
+- `variant`: ContentVariant | "muted"（见下方 Content Variant Tokens）
 - `align`: "left" | "center" | "right" | "justify"
 - `bold`: boolean
 - `italic`: boolean
 - `uppercase`: boolean
 - `monospace`: boolean
-- `tabular`: boolean (fixed-width numbers)
-- `ellipsis`: boolean (truncate with ellipsis)
+- `tabular`: boolean（等宽数字）
+- `ellipsis`: boolean（用省略号截断）
 - `wrap`: "nowrap" | "normal" | "pre" | "pre-line" | "pre-wrap"
 - `textWrap`: "wrap" | "nowrap" | "balance" | "pretty" | "stable"
 - `wordBreak`: "normal" | "break-all" | "keep-all" | "break-word"
-- `density`: "compressed" | "comfortable" (line-height)
+- `density`: "compressed" | "comfortable"（line-height）
 - `underline`: boolean | "dotted"
 - `strikethrough`: boolean
 
@@ -222,20 +222,20 @@ const Label = styled('span')`
 
 ### Heading
 
-Use `<Heading>` for all headings. Never use raw `<h1>`, `<h2>`, etc. elements.
+所有标题都使用 `<Heading>`。不要使用原始 `<h1>`、`<h2>` 等元素。
 
-**Key Props** (see `heading.tsx` for complete list):
+**关键 Props**（完整列表见 `heading.tsx`）：
 
-- `as`: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" (REQUIRED)
+- `as`: "h1" | "h2" | "h3" | "h4" | "h5" | "h6"（必需）
 - `size`: HeadingSize ("xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl")
-- `variant`: Same as Text
-- `align`: Same as Text
-- `italic`, `monospace`, `tabular`: Same as Text
-- `ellipsis`, `wrap`, `textWrap`, `wordBreak`: Same as Text
-- `density`: Same as Text
-- `underline`, `strikethrough`: Same as Text
+- `variant`: 与 Text 相同
+- `align`: 与 Text 相同
+- `italic`, `monospace`, `tabular`: 与 Text 相同
+- `ellipsis`, `wrap`, `textWrap`, `wordBreak`: 与 Text 相同
+- `density`: 与 Text 相同
+- `underline`, `strikethrough`: 与 Text 相同
 
-Note: `bold` and `uppercase` are NOT available on Heading (headings are always bold).
+注意：Heading 不支持 `bold` 和 `uppercase`（标题始终为粗体）。
 
 ```tsx
 import {Heading} from '@sentry/scraps/text';
@@ -256,13 +256,13 @@ const Title = styled('h2')`
 <Heading as="h3" size="xl">Large H3</Heading>
 ```
 
-## Info Components
+## 信息组件
 
-> **Important**: Always prefer `InfoTip` and `InfoText` over using raw `<Tooltip>` components. These provide consistent, accessible patterns for contextual help.
+> **重要**：始终优先使用 `InfoTip` 和 `InfoText`，而不是原始 `<Tooltip>` 组件。它们为上下文帮助提供了一致且无障碍的模式。
 
 ### InfoTip
 
-Use `<InfoTip>` to add an info icon with tooltip next to labels or headings. It's keyboard accessible and provides a consistent pattern for supplementary help.
+使用 `<InfoTip>` 在标签或标题旁添加带 tooltip 的信息图标。它支持键盘访问，并为补充性帮助提供一致模式。
 
 ```tsx
 import {InfoTip} from '@sentry/scraps/info';
@@ -284,20 +284,20 @@ import {Text} from '@sentry/scraps/text';
 </Flex>
 ```
 
-**Key Props**:
+**关键 Props**：
 
-- `title`: Tooltip content (required)
-- `size`: "xs" | "sm" (default) | "md"
+- `title`: Tooltip 内容（必需）
+- `size`: "xs" | "sm"（默认）| "md"
 
-**When to Use**:
+**使用场景**：
 
-- Add context to headings or section titles
-- Show supplementary information without inline text
-- Explain settings or configuration options
+- 为标题或章节标题补充上下文
+- 在不添加行内文本的情况下显示补充信息
+- 解释设置或配置选项
 
 ### InfoText
 
-Use `<InfoText>` for inline text with a tooltip. It renders text with a dotted underline that reveals a tooltip on hover/focus.
+使用 `<InfoText>` 创建带 tooltip 的行内文本。它会渲染带虚线下划线的文本，并在 hover/focus 时显示 tooltip。
 
 ```tsx
 import {InfoText} from '@sentry/scraps/info';
@@ -313,10 +313,10 @@ import {InfoText} from '@sentry/scraps/info';
 </InfoText>
 ```
 
-**Key Props**:
+**关键 Props**：
 
-- `title`: Tooltip content (required)
-- Extends `Text`, so supports all Text props: `size`, `variant`, `bold`, etc.
+- `title`: Tooltip 内容（必需）
+- 扩展自 `Text`，因此支持所有 Text props：`size`、`variant`、`bold` 等
 
 ```tsx
 // With Text styling props
@@ -328,24 +328,24 @@ import {InfoText} from '@sentry/scraps/info';
 </InfoText>
 ```
 
-**When to Use**:
+**使用场景**：
 
-- Define technical terms or acronyms inline
-- Provide additional context without adding visual clutter
-- Create consistent, accessible inline help patterns
+- 在行内定义技术术语或缩写词
+- 在不增加视觉杂乱的情况下提供额外上下文
+- 创建一致且无障碍的行内帮助模式
 
-## Creating Thin Abstractions
+## 创建轻量抽象
 
-> **⚠️ CRITICAL: ALWAYS prompt the user for confirmation before creating abstractions over layout primitives (`Container`, `Flex`, `Grid`, `Stack`, `Text`, `Heading`) when the intent is to DRY (Don't Repeat Yourself) repeated props.**
+> **⚠️ 关键：当目的是对重复 props 进行 DRY（Don't Repeat Yourself，不要重复自己）处理时，在为布局原语（`Container`、`Flex`、`Grid`、`Stack`、`Text`、`Heading`）创建抽象之前，始终必须先提示用户确认。**
 
-You can create thin abstractions over primitives with the purpose of improving the semantic structure by using meaningful names (e.g., `TableCell` vs generic `Flex`) and with the purpose of providing some default props. It is very important that you do this sparingly, and only when it is a net gain for readability. For example, if there are only two instances of the duplicated props, and they are placed next to each other, the price of the abstraction outweights the terseness.
+你可以基于原语创建轻量抽象，目的是通过有意义的名称（例如 `TableCell` 而不是泛泛的 `Flex`）改善语义结构，并提供一些默认 props。非常重要的是，你应该谨慎这么做，并且只在它确实能提升可读性时这样做。例如，如果重复 props 只有两处实例，而且它们彼此相邻，那么抽象带来的代价会超过简洁性收益。
 
-**Before creating an abstraction, you MUST:**
+**创建抽象之前，你必须：**
 
-1. Ask the user for confirmation
-2. Explain what abstraction you plan to create
-3. Justify why the abstraction is worth the added complexity
-4. Wait for explicit approval before proceeding
+1. 请求用户确认
+2. 说明你计划创建什么抽象
+3. 解释为什么该抽象值得增加复杂度
+4. 等待明确批准后再继续
 
 ```tsx
 import {Flex, type FlexProps} from '@sentry/scraps/layout';
@@ -366,18 +366,18 @@ function TableCell(props: FlexProps) {
 <TableCell align="start">Content 3</TableCell>{/* Can override defaults */}
 ```
 
-**Key points:**
+**要点：**
 
-- **ALWAYS prompt for user confirmation BEFORE creating the abstraction**
-- Extend the primitive's props type (`extends FlexProps`)
-- Set defaults on JSX component and spread `{...props}` to allow overrides
-- Don't use styled components - compose primitives instead
+- **创建抽象之前始终先提示用户确认**
+- 扩展原语的 props 类型（`extends FlexProps`）
+- 在 JSX 组件上设置默认值，并展开 `{...props}` 以允许覆盖
+- 不要使用 styled components，而是组合原语
 
-## General Guidelines
+## 通用指南
 
-### 1. Use Responsive Props
+### 1. 使用响应式 Props
 
-Most props support responsive syntax using breakpoint keys.
+大多数 props 支持使用断点键的响应式语法。
 
 ```tsx
 // ❌ Don't use styled media queries
@@ -394,14 +394,14 @@ const Component = styled('div')`
 <Flex direction={{xs: 'column', md: 'row'}}>
 ```
 
-### 2. Prefer Gap/Padding Over Margin
+### 2. 优先使用 Gap/Padding，而不是 Margin
 
-Container supports `margin` props but they are deprecated. Use `gap` on parent containers instead.
+Container 支持 `margin` props，但它们已废弃。请改用父容器上的 `gap`。
 
 ```tsx
 // ❌ Don't use margin between children
-const Child = styled('div')`
-  margin-right: ${p => p.theme.space.lg};
+const Child = styled("div")`
+  margin-right: ${(p) => p.theme.space.lg};
 `;
 
 // ✅ Use gap on parent container
@@ -411,17 +411,17 @@ const Child = styled('div')`
 </Flex>;
 ```
 
-### 3. Split Layout from Typography
+### 3. 将布局与排版拆分
 
-Don't couple layout and typography in a single styled component. Use separate primitives.
+不要在单个 styled component 中耦合布局和排版。使用独立的原语。
 
 ```tsx
 // ❌ Don't couple layout and typography
-const Component = styled('div')`
+const Component = styled("div")`
   display: flex;
   flex-direction: column;
-  color: ${p => p.theme.tokens.content.secondary};
-  font-size: ${p => p.theme.font.size.lg};
+  color: ${(p) => p.theme.tokens.content.secondary};
+  font-size: ${(p) => p.theme.font.size.lg};
 `;
 
 // ✅ Split into layout and typography primitives
@@ -432,68 +432,68 @@ const Component = styled('div')`
 </Flex>;
 ```
 
-### 4. Check Implementation Files for All Props
+### 4. 查看实现文件以了解所有 Props
 
-The implementation files contain the complete, up-to-date list of supported props with TypeScript types. When in doubt:
+实现文件包含完整且最新的受支持 props 列表，以及 TypeScript 类型。拿不准时：
 
-- Read `/static/app/components/core/layout/container.tsx` for base layout props
-- Read `/static/app/components/core/layout/flex.tsx` for Flex-specific props
-- Read `/static/app/components/core/layout/grid.tsx` for Grid-specific props
-- Read `/static/app/components/core/layout/stack.tsx` for Stack-specific props
-- Read `/static/app/components/core/text/text.tsx` for Text props
-- Read `/static/app/components/core/text/heading.tsx` for Heading props
+- 阅读 `/static/app/components/core/layout/container.tsx` 了解基础布局 props
+- 阅读 `/static/app/components/core/layout/flex.tsx` 了解 Flex 专属 props
+- 阅读 `/static/app/components/core/layout/grid.tsx` 了解 Grid 专属 props
+- 阅读 `/static/app/components/core/layout/stack.tsx` 了解 Stack 专属 props
+- 阅读 `/static/app/components/core/text/text.tsx` 了解 Text props
+- 阅读 `/static/app/components/core/text/heading.tsx` 了解 Heading props
 
-## Token Reference
+## Token 参考
 
-### Spacing Tokens (SpaceSize)
+### 间距 Tokens (SpaceSize)
 
-Use these for `gap`, `padding`:
+用于 `gap`、`padding`：
 
 - `"0"`, `"2xs"`, `"xs"`, `"sm"`, `"md"`, `"lg"`, `"xl"`, `"2xl"`, `"3xl"`
-- Multiple values: `"md lg"` (vertical horizontal)
-- Responsive: `{{xs: "sm", md: "lg"}}`
+- 多值：`"md lg"`（垂直 水平）
+- 响应式：`{{xs: "sm", md: "lg"}}`
 
-### Border Tokens (BorderVariant)
+### 边框 Tokens (BorderVariant)
 
-Use these for `border` prop:
+用于 `border` prop：
 
 - `"primary"`, `"muted"`, `"accent"`, `"danger"`, `"promotion"`, `"success"`, `"warning"`
 
-### Radius Tokens (RadiusSize)
+### 圆角 Tokens (RadiusSize)
 
-Use these for `radius` prop:
+用于 `radius` prop：
 
 - `"0"`, `"2xs"`, `"xs"`, `"sm"`, `"md"`, `"lg"`, `"xl"`, `"2xl"`, `"full"`
 
-### Text Size Tokens
+### 文本尺寸 Tokens
 
 - **TextSize**: "xs" | "sm" | "md" | "lg" | "xl" | "2xl"
 - **HeadingSize**: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl"
 
-### Surface Variant Tokens (SurfaceVariant)
+### 表面变体 Tokens (SurfaceVariant)
 
-Use these for `background` prop on layout components:
+用于布局组件上的 `background` prop：
 
 - `"primary"`, `"secondary"`, `"tertiary"`
 
-### Content Variant Tokens (ContentVariant)
+### 内容变体 Tokens (ContentVariant)
 
-Use these for `variant` prop on Text and Heading:
+用于 Text 和 Heading 上的 `variant` prop：
 
 - **ContentVariant**: "primary" | "secondary" | "accent" | "danger" | "promotion" | "success" | "warning"
-- **Plus "muted"**: Text and Heading also accept "muted" in addition to ContentVariant values
+- **再加上 "muted"**：Text 和 Heading 除了 ContentVariant 值外，也接受 "muted"
 
-## Quick Reference Checklist
+## 快速参考检查清单
 
-Before creating a styled component, ask:
+创建 styled component 之前，先问：
 
-- ✅ Can I use `<Flex>`, `<Grid>`, or `<Stack>` for layout?
-- ✅ Can I use `<Stack>` for vertical layouts with default column direction?
-- ✅ Can I use `<Container>` for borders/padding/positioning?
-- ✅ Can I use `<Text>` or `<Heading>` for typography?
-- ✅ Can I use `<InfoTip>` or `<InfoText>` instead of `<Tooltip>`?
-- ✅ Can I use responsive props instead of media queries?
-- ✅ Can I use `gap` instead of margins?
-- ✅ Does the primitive support the prop I need? (Check implementation files)
+- ✅ 我可以使用 `<Flex>`、`<Grid>` 或 `<Stack>` 做布局吗？
+- ✅ 我可以使用默认列方向的 `<Stack>` 做垂直布局吗？
+- ✅ 我可以使用 `<Container>` 处理边框、padding 或定位吗？
+- ✅ 我可以使用 `<Text>` 或 `<Heading>` 做排版吗？
+- ✅ 我可以使用 `<InfoTip>` 或 `<InfoText>` 代替 `<Tooltip>` 吗？
+- ✅ 我可以使用响应式 props 代替 media queries 吗？
+- ✅ 我可以使用 `gap` 代替 `margin` 吗？
+- ✅ 原语支持我需要的 prop 吗？（查看实现文件）
 
-If you answered yes to any of these, **use the primitive instead**.
+如果任一问题的答案是肯定的，**就改用该原语**。
